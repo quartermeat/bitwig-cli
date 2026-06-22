@@ -98,8 +98,8 @@ func commandFromArgs(args []string) (Command, error) {
 		}
 		return Command{Action: "scene." + args[2], Slot: number}, nil
 	case "clip":
-		if len(args) != 4 && len(args) != 5 {
-			return Command{}, errors.New("usage: bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete|create [beats]>")
+		if len(args) < 4 {
+			return Command{}, errors.New("usage: bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete|clear|create|note|pattern>")
 		}
 		track, err := strconv.Atoi(args[1])
 		if err != nil || track < 1 {
@@ -119,8 +119,32 @@ func commandFromArgs(args []string) (Command, error) {
 			}
 			return Command{Action: "clip.create", Track: track, Slot: slot, Value: beats}, nil
 		}
+		if args[3] == "note" {
+			if len(args) != 7 {
+				return Command{}, errors.New("usage: bw clip <track> <slot> note <pitch> <step> <length>")
+			}
+			pitch, err := strconv.Atoi(args[4])
+			if err != nil || pitch < 0 || pitch > 127 {
+				return Command{}, fmt.Errorf("invalid MIDI pitch %q", args[4])
+			}
+			step, err := strconv.Atoi(args[5])
+			if err != nil || step < 0 {
+				return Command{}, fmt.Errorf("invalid step %q", args[5])
+			}
+			length, err := strconv.ParseFloat(args[6], 64)
+			if err != nil || length <= 0 {
+				return Command{}, fmt.Errorf("invalid note length %q", args[6])
+			}
+			return Command{Action: "clip.note", Track: track, Slot: slot, Pitch: pitch, Step: step, Length: length}, nil
+		}
+		if args[3] == "pattern" {
+			if len(args) != 5 {
+				return Command{}, errors.New("usage: bw clip <track> <slot> pattern <name>")
+			}
+			return Command{Action: "clip.pattern", Track: track, Slot: slot, Name: args[4]}, nil
+		}
 		if len(args) != 4 {
-			return Command{}, errors.New("usage: bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete>")
+			return Command{}, errors.New("usage: bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete|clear>")
 		}
 		return Command{Action: "clip." + args[3], Track: track, Slot: slot}, nil
 	default:
@@ -168,6 +192,8 @@ Usage:
   bw track <number> <arm|mute|solo|select>
   bw scene create
   bw scene <number> <select|show|launch>
-  bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete>
-  bw clip <track> <slot> create <beats>`)
+  bw clip <track> <slot> <launch|record|stop|select|show|duplicate|delete|clear>
+  bw clip <track> <slot> create <beats>
+  bw clip <track> <slot> note <pitch> <step> <length>
+  bw clip <track> <slot> pattern <test-c|bass-c>`)
 }

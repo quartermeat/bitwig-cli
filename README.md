@@ -25,6 +25,8 @@ go run ./cmd/bw scene create
 go run ./cmd/bw scene 1 select
 go run ./cmd/bw scene 1 launch
 go run ./cmd/bw clip 4 4 create 8
+go run ./cmd/bw clip 4 4 note 60 0 4
+go run ./cmd/bw clip 4 4 pattern test-c
 go run ./cmd/bw clip 2 4 launch
 ```
 
@@ -71,6 +73,7 @@ This is a first working scaffold, not a finished installed Bitwig extension.
 - Commands are named around live performance actions first.
 - The CLI avoids writing project files or touching Bitwig project internals.
 - `panic` is mapped to transport stop in the first version.
+- Clip note steps use MIDI pitch numbers and 16th-note step positions.
 
 ## Next Steps
 

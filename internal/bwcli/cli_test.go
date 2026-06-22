@@ -15,7 +15,10 @@ func TestCommandFromArgs(t *testing.T) {
 		{name: "scene create", args: []string{"scene", "create"}, want: Command{Action: "scene.create"}},
 		{name: "scene select", args: []string{"scene", "3", "select"}, want: Command{Action: "scene.select", Slot: 3}},
 		{name: "clip launch", args: []string{"clip", "2", "4", "launch"}, want: Command{Action: "clip.launch", Track: 2, Slot: 4}},
+		{name: "clip clear", args: []string{"clip", "8", "5", "clear"}, want: Command{Action: "clip.clear", Track: 8, Slot: 5}},
 		{name: "clip create", args: []string{"clip", "2", "4", "create", "8"}, want: Command{Action: "clip.create", Track: 2, Slot: 4, Value: 8}},
+		{name: "clip note", args: []string{"clip", "8", "5", "note", "60", "0", "4"}, want: Command{Action: "clip.note", Track: 8, Slot: 5, Pitch: 60, Step: 0, Length: 4}},
+		{name: "clip pattern", args: []string{"clip", "8", "5", "pattern", "test-c"}, want: Command{Action: "clip.pattern", Track: 8, Slot: 5, Name: "test-c"}},
 	}
 
 	for _, tt := range tests {

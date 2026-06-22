@@ -2,6 +2,7 @@ package dev.codextools.bitwigcli;
 
 import com.bitwig.extension.controller.ControllerExtension;
 import com.bitwig.extension.controller.api.Application;
+import com.bitwig.extension.controller.api.Clip;
 import com.bitwig.extension.controller.api.ClipLauncherSlotBank;
 import com.bitwig.extension.controller.api.ControllerHost;
 import com.bitwig.extension.controller.api.Project;
@@ -24,6 +25,7 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
     private Project project;
     private Transport transport;
     private TrackBank trackBank;
+    private Clip launcherCursorClip;
     private Thread listenerThread;
     private DatagramSocket socket;
     private volatile boolean running;
@@ -39,6 +41,8 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
         project = host.getProject();
         transport = host.createTransport();
         trackBank = host.createMainTrackBank(16, 0, 16);
+        launcherCursorClip = host.createLauncherCursorClip(128, 128);
+        launcherCursorClip.setStepSize(0.25);
         running = true;
         startListener();
         host.println("Bitwig CLI Bridge listening on UDP 127.0.0.1:" + PORT);
@@ -164,10 +168,22 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
             case "clip.delete":
                 slots(command.track).deleteClip(command.slot - 1);
                 break;
+            case "clip.clear":
+                prepareClipForEditing(command.track, command.slot);
+                host.scheduleTask(() -> launcherCursorClip.clearSteps(), 100);
+                break;
             case "clip.create":
                 slots(command.track).createEmptyClip(command.slot - 1, (int) command.value);
                 slots(command.track).getItemAt(command.slot - 1).select();
                 slots(command.track).getItemAt(command.slot - 1).showInEditor();
+                break;
+            case "clip.note":
+                prepareClipForEditing(command.track, command.slot);
+                host.scheduleTask(() -> writeNote(command.pitch, command.step, command.length), 100);
+                break;
+            case "clip.pattern":
+                prepareClipForEditing(command.track, command.slot);
+                host.scheduleTask(() -> writePattern(command.name), 100);
                 break;
             default:
                 host.println("Unknown Bitwig CLI command: " + command.action);
@@ -191,18 +207,55 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
         return oneBasedPosition > 0 ? oneBasedPosition - 1 : -1;
     }
 
+    private void prepareClipForEditing(int oneBasedTrack, int oneBasedSlot) {
+        slots(oneBasedTrack).getItemAt(oneBasedSlot - 1).select();
+        slots(oneBasedTrack).getItemAt(oneBasedSlot - 1).showInEditor();
+    }
+
+    private void writeNote(int pitch, int step, double length) {
+        launcherCursorClip.setStep(step, pitch, 0, length);
+    }
+
+    private void writePattern(String name) {
+        launcherCursorClip.clearSteps();
+        if ("bass-c".equals(name)) {
+            writePatternNote(48, 0, 2.0);
+            writePatternNote(43, 4, 2.0);
+            writePatternNote(46, 8, 2.0);
+            writePatternNote(41, 12, 2.0);
+            return;
+        }
+
+        if (!"test-c".equals(name)) {
+            host.println("Unknown Bitwig CLI pattern: " + name + "; writing test-c");
+        }
+        writePatternNote(60, 0, 8.0);
+    }
+
+    private void writePatternNote(int pitch, int step, double length) {
+        launcherCursorClip.setStep(step, pitch, 0, length);
+    }
+
     private static final class Command {
         String action = "";
         int track;
         int slot;
+        int pitch;
+        int step;
+        double length;
         double value;
+        String name = "";
 
         static Command parse(String body) {
             Command command = new Command();
             command.action = extractString(body, "action");
             command.track = extractInt(body, "track");
             command.slot = extractInt(body, "slot");
+            command.pitch = extractInt(body, "pitch");
+            command.step = extractInt(body, "step");
+            command.length = extractDouble(body, "length");
             command.value = extractDouble(body, "value");
+            command.name = extractString(body, "name");
             return command;
         }
 

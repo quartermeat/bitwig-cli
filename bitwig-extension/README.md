@@ -42,5 +42,7 @@ Initial command contract:
 {"action":"scene.launch","slot":1}
 {"action":"track.arm","track":2}
 {"action":"clip.create","track":4,"slot":4,"value":8}
+{"action":"clip.note","track":4,"slot":4,"pitch":60,"step":0,"length":4}
+{"action":"clip.pattern","track":4,"slot":4,"name":"test-c"}
 {"action":"clip.launch","track":2,"slot":4}
 ```
