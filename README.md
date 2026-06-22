@@ -15,6 +15,7 @@ bw.exe -> UDP JSON on 127.0.0.1:58770 -> Bitwig Controller Extension -> Bitwig
 go run ./cmd/bw status
 go run ./cmd/bw play
 go run ./cmd/bw stop
+go run ./cmd/bw save
 go run ./cmd/bw record
 go run ./cmd/bw overdub
 go run ./cmd/bw panic
@@ -43,8 +44,9 @@ Restart Bitwig after rebuilding the Java extension:
 ```
 
 The PowerShell script first asks Bitwig to close normally, waits 10 seconds, then
-force-stops remaining Bitwig processes before launching Bitwig again. Use
-`.\Restart-Bitwig.bat -NoForce` to avoid the force-stop fallback.
+saves through the CLI bridge, force-stops remaining Bitwig processes if needed,
+and launches Bitwig again. Use `.\Restart-Bitwig.bat -NoForce` to avoid the
+force-stop fallback, or `.\Restart-Bitwig.bat -SkipSave` to skip the save step.
 
 To restart directly into a project:
 

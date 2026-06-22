@@ -98,6 +98,10 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
             case "status":
                 host.println("Bitwig CLI Bridge status requested");
                 break;
+            case "save":
+                application.getAction("Save").invoke();
+                host.println("Bitwig CLI Bridge requested project save");
+                break;
             case "play":
                 transport.play();
                 break;

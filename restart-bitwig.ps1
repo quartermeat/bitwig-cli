@@ -1,7 +1,9 @@
 param(
     [int]$GraceSeconds = 10,
     [switch]$NoForce,
+    [switch]$SkipSave,
     [string]$ProjectPath,
+    [string]$BwExe = (Join-Path $PSScriptRoot "bw.exe"),
     [string]$BitwigExe = "C:\Program Files\Bitwig Studio\Bitwig Studio.exe"
 )
 
@@ -35,6 +37,20 @@ function Get-BitwigProcess {
 }
 
 $processes = Get-BitwigProcess
+
+if ($processes -and -not $SkipSave) {
+    if (Test-Path -LiteralPath $BwExe) {
+        Write-Host "Saving current Bitwig project..."
+        try {
+            & $BwExe save | Write-Host
+            Start-Sleep -Seconds 2
+        } catch {
+            Write-Warning "Could not save through Bitwig CLI bridge: $($_.Exception.Message)"
+        }
+    } else {
+        Write-Warning "bw.exe not found, skipping project save: $BwExe"
+    }
+}
 
 foreach ($process in $processes) {
     if ($process.MainWindowHandle -ne 0) {

@@ -49,8 +49,8 @@ func commandFromArgs(args []string) (Command, error) {
 	switch args[0] {
 	case "help", "-h", "--help":
 		return Command{Action: "help"}, nil
-	case "status":
-		return Command{Action: "status"}, nil
+	case "status", "save":
+		return Command{Action: args[0]}, nil
 	case "play", "stop", "record", "overdub", "panic":
 		return Command{Action: args[0]}, nil
 	case "tempo":
@@ -186,6 +186,7 @@ func printUsage(w io.Writer) {
 
 Usage:
   bw [--addr 127.0.0.1:58770] status
+  bw save
   bw play|stop|record|overdub|panic
   bw tempo <bpm>
   bw track create <instrument|audio|effect> [position]
