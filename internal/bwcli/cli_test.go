@@ -10,6 +10,9 @@ func TestCommandFromArgs(t *testing.T) {
 	}{
 		{name: "play", args: []string{"play"}, want: Command{Action: "play"}},
 		{name: "save", args: []string{"save"}, want: Command{Action: "save"}},
+		{name: "inspect", args: []string{"inspect"}, want: Command{Action: "inspect"}},
+		{name: "inspect track", args: []string{"inspect", "track", "8"}, want: Command{Action: "inspect.track", Track: 8}},
+		{name: "inspect clip", args: []string{"inspect", "clip", "8", "5"}, want: Command{Action: "inspect.clip", Track: 8, Slot: 5}},
 		{name: "tempo", args: []string{"tempo", "128"}, want: Command{Action: "tempo", Value: 128}},
 		{name: "track create", args: []string{"track", "create", "instrument", "8"}, want: Command{Action: "track.create.instrument", Track: 8}},
 		{name: "track arm", args: []string{"track", "2", "arm"}, want: Command{Action: "track.arm", Track: 2}},

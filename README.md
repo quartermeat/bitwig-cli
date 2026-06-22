@@ -13,6 +13,9 @@ bw.exe -> UDP JSON on 127.0.0.1:58770 -> Bitwig Controller Extension -> Bitwig
 
 ```powershell
 go run ./cmd/bw status
+go run ./cmd/bw inspect
+go run ./cmd/bw inspect track 8
+go run ./cmd/bw inspect clip 8 5
 go run ./cmd/bw play
 go run ./cmd/bw stop
 go run ./cmd/bw save

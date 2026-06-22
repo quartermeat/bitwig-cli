@@ -3,6 +3,7 @@ package dev.codextools.bitwigcli;
 import com.bitwig.extension.controller.ControllerExtension;
 import com.bitwig.extension.controller.api.Application;
 import com.bitwig.extension.controller.api.Clip;
+import com.bitwig.extension.controller.api.ClipLauncherSlot;
 import com.bitwig.extension.controller.api.ClipLauncherSlotBank;
 import com.bitwig.extension.controller.api.ControllerHost;
 import com.bitwig.extension.controller.api.Project;
@@ -43,6 +44,7 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
         trackBank = host.createMainTrackBank(16, 0, 16);
         launcherCursorClip = host.createLauncherCursorClip(128, 128);
         launcherCursorClip.setStepSize(0.25);
+        markStateInterested();
         running = true;
         startListener();
         host.println("Bitwig CLI Bridge listening on UDP 127.0.0.1:" + PORT);
@@ -89,6 +91,9 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
 
     private String handle(String body) {
         Command command = Command.parse(body);
+        if (command.action.startsWith("inspect")) {
+            return inspect(command);
+        }
         host.scheduleTask(() -> apply(command), 0);
         return "queued " + command.action;
     }
@@ -238,6 +243,72 @@ public final class BitwigCliBridgeExtension extends ControllerExtension {
 
     private void writePatternNote(int pitch, int step, double length) {
         launcherCursorClip.setStep(step, pitch, 0, length);
+    }
+
+    private void markStateInterested() {
+        transport.isPlaying().markInterested();
+        for (int t = 1; t <= 16; t++) {
+            Track track = track(t);
+            track.trackType().markInterested();
+            track.arm().markInterested();
+            track.mute().markInterested();
+            track.solo().markInterested();
+            track.isMutedBySolo().markInterested();
+            track.isStopped().markInterested();
+
+            for (int s = 1; s <= 16; s++) {
+                ClipLauncherSlot clip = slots(t).getItemAt(s - 1);
+                clip.hasContent().markInterested();
+                clip.isSelected().markInterested();
+                clip.isPlaying().markInterested();
+                clip.isPlaybackQueued().markInterested();
+                clip.isRecording().markInterested();
+                clip.isRecordingQueued().markInterested();
+                clip.isStopQueued().markInterested();
+            }
+        }
+    }
+
+    private String inspect(Command command) {
+        if ("inspect.track".equals(command.action)) {
+            return inspectTrack(command.track);
+        }
+        if ("inspect.clip".equals(command.action)) {
+            return inspectClip(command.track, command.slot);
+        }
+
+        StringBuilder out = new StringBuilder();
+        out.append("transport.playing=").append(transport.isPlaying().get()).append('\n');
+        for (int i = 1; i <= 16; i++) {
+            String type = track(i).trackType().get();
+            if (type != null && !type.isEmpty()) {
+                out.append(inspectTrack(i)).append('\n');
+            }
+        }
+        return out.toString().trim();
+    }
+
+    private String inspectTrack(int oneBasedTrack) {
+        Track t = track(oneBasedTrack);
+        return "track " + oneBasedTrack
+            + " type=" + t.trackType().get()
+            + " arm=" + t.arm().get()
+            + " mute=" + t.mute().get()
+            + " solo=" + t.solo().get()
+            + " mutedBySolo=" + t.isMutedBySolo().get()
+            + " stopped=" + t.isStopped().get();
+    }
+
+    private String inspectClip(int oneBasedTrack, int oneBasedSlot) {
+        ClipLauncherSlot clip = slots(oneBasedTrack).getItemAt(oneBasedSlot - 1);
+        return "clip " + oneBasedTrack + "/" + oneBasedSlot
+            + " hasContent=" + clip.hasContent().get()
+            + " selected=" + clip.isSelected().get()
+            + " playing=" + clip.isPlaying().get()
+            + " playbackQueued=" + clip.isPlaybackQueued().get()
+            + " recording=" + clip.isRecording().get()
+            + " recordingQueued=" + clip.isRecordingQueued().get()
+            + " stopQueued=" + clip.isStopQueued().get();
     }
 
     private static final class Command {

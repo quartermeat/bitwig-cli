@@ -51,6 +51,29 @@ func commandFromArgs(args []string) (Command, error) {
 		return Command{Action: "help"}, nil
 	case "status", "save":
 		return Command{Action: args[0]}, nil
+	case "inspect":
+		if len(args) == 1 {
+			return Command{Action: "inspect"}, nil
+		}
+		if len(args) == 3 && args[1] == "track" {
+			track, err := strconv.Atoi(args[2])
+			if err != nil || track < 1 {
+				return Command{}, fmt.Errorf("invalid track number %q", args[2])
+			}
+			return Command{Action: "inspect.track", Track: track}, nil
+		}
+		if len(args) == 4 && args[1] == "clip" {
+			track, err := strconv.Atoi(args[2])
+			if err != nil || track < 1 {
+				return Command{}, fmt.Errorf("invalid track number %q", args[2])
+			}
+			slot, err := strconv.Atoi(args[3])
+			if err != nil || slot < 1 {
+				return Command{}, fmt.Errorf("invalid clip slot %q", args[3])
+			}
+			return Command{Action: "inspect.clip", Track: track, Slot: slot}, nil
+		}
+		return Command{}, errors.New("usage: bw inspect | bw inspect track <number> | bw inspect clip <track> <slot>")
 	case "play", "stop", "record", "overdub", "panic":
 		return Command{Action: args[0]}, nil
 	case "tempo":
@@ -186,6 +209,9 @@ func printUsage(w io.Writer) {
 
 Usage:
   bw [--addr 127.0.0.1:58770] status
+  bw inspect
+  bw inspect track <number>
+  bw inspect clip <track> <slot>
   bw save
   bw play|stop|record|overdub|panic
   bw tempo <bpm>

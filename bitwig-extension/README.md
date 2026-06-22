@@ -31,6 +31,9 @@ Initial command contract:
 
 ```json
 {"action":"play"}
+{"action":"inspect"}
+{"action":"inspect.track","track":8}
+{"action":"inspect.clip","track":8,"slot":5}
 {"action":"stop"}
 {"action":"record"}
 {"action":"overdub"}
